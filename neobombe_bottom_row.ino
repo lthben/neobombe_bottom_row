@@ -18,16 +18,20 @@ Notes:
 #include "utility/Adafruit_PWMServoDriver.h"
 
 //USER SETTINGS
-const int MOTORSPEED = 60; //set to high cos SINGLEping
+const int MOTORSPEED = 60; //RPM
 const int MOTORDELAY = 1000; //delay between motors moving
 
 Adafruit_MotorShield AFMS_1 = Adafruit_MotorShield(0x60);
 Adafruit_StepperMotor *myStepper_1 = AFMS_1.getStepper(200, 1); //NEMA 17 stepper
-Adafruit_StepperMotor *myStepper_2 = AFMS_1.getStepper(200, 2); //NEMA 17 stepper
+Adafruit_StepperMotor *myStepper_2 = AFMS_1.getStepper(200, 2);
 
 Adafruit_MotorShield AFMS_2 = Adafruit_MotorShield(0x61);
-Adafruit_StepperMotor *myStepper_3 = AFMS_2.getStepper(513, 1); //small stepper
-Adafruit_StepperMotor *myStepper_4 = AFMS_2.getStepper(513, 2); //small stepper
+Adafruit_StepperMotor *myStepper_3 = AFMS_2.getStepper(200, 1); 
+Adafruit_StepperMotor *myStepper_4 = AFMS_2.getStepper(200, 2); 
+
+Adafruit_MotorShield AFMS_3 = Adafruit_MotorShield(0x62);
+Adafruit_StepperMotor *myStepper_5 = AFMS_3.getStepper(200, 1); 
+Adafruit_StepperMotor *myStepper_6 = AFMS_3.getStepper(200, 2); 
 
 int ledPin = 5;
 int switchPin = 7;
@@ -40,6 +44,7 @@ void setup() {
 
   AFMS_1.begin();
   AFMS_2.begin();
+  AFMS_3.begin();
 
   TWBR = ((F_CPU / 400000l) - 16) / 2; // Change the i2c clock to 400KHz
 
@@ -47,6 +52,8 @@ void setup() {
   myStepper_2->setSpeed(MOTORSPEED);
   myStepper_3->setSpeed(MOTORSPEED);
   myStepper_4->setSpeed(MOTORSPEED);
+  myStepper_5->setSpeed(MOTORSPEED);
+  myStepper_6->setSpeed(MOTORSPEED);
 
   Serial.flush();
 }
@@ -55,7 +62,7 @@ void setup() {
 boolean is_processing;
 byte incoming_byte;
 long logged_time;
-boolean has_1_moved, has_2_moved, has_3_moved, has_4_moved;
+boolean has_1_moved, has_2_moved, has_3_moved, has_4_moved, has_5_moved, has_6_moved;
 
 void loop() {
 
@@ -67,57 +74,66 @@ void loop() {
 
       digitalWrite(ledPin, HIGH);
       is_processing = true;
-      has_4_moved = true;
+      has_6_moved = true; //to start the process
     }
     else if (incoming_byte == 66) {
 
       digitalWrite(ledPin, LOW);
       is_processing = false;
+      has_1_moved = has_2_moved = has_3_moved = has_4_moved = has_5_moved = has_6_moved = false;
 
       myStepper_1->release();
       myStepper_2->release();
       myStepper_3->release();
       myStepper_4->release();
+      myStepper_5->release();
+      myStepper_6->release();
     }
   }
 
   if (is_processing) {
     if (millis() - logged_time > MOTORDELAY) {
-      if (has_4_moved == true) {
+      if (has_6_moved == true) {
         myStepper_1->step(8, FORWARD, SINGLE);
         logged_time = millis();
         has_1_moved = true;
-        has_4_moved = false;
+        has_6_moved = false;
       }
-    }
 
-    if (millis() - logged_time  > MOTORDELAY) {
-      if (has_1_moved == true) {
+      else if (has_1_moved == true) {
         myStepper_2->step(8, FORWARD, SINGLE);
         logged_time = millis();
         has_2_moved = true;
         has_1_moved = false;
       }
-    }
 
-    if (millis() - logged_time > MOTORDELAY) {
-      if (has_2_moved == true) {
-        myStepper_3->step(20, FORWARD, SINGLE);
+      else if (has_2_moved == true) {
+        myStepper_3->step(8, FORWARD, SINGLE);
         logged_time = millis();
         has_3_moved = true;
         has_2_moved = false;
       }
-    }
 
-    if (millis() - logged_time > MOTORDELAY) {
-      if (has_3_moved == true) {
-        myStepper_4->step(20, FORWARD, SINGLE);
+      else if (has_3_moved == true) {
+        myStepper_4->step(8, FORWARD, SINGLE);
         logged_time = millis();
         has_4_moved = true;
         has_3_moved = false;
       }
+
+      else if (has_4_moved == true) {
+        myStepper_5->step(8, FORWARD, SINGLE);
+        logged_time = millis();
+        has_5_moved = true;
+        has_4_moved = false;
+      }
+
+      else if (has_5_moved == true) {
+        myStepper_6->step(8, FORWARD, SINGLE);
+        logged_time = millis();
+        has_6_moved = true;
+        has_5_moved = false;
+      }
     }
   }
-
 }
-
